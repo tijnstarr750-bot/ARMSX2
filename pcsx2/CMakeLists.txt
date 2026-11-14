@@ -496,6 +496,7 @@ set(pcsx2USBSources
 	USB/usb-pad/usb-gametrak.cpp
 	USB/usb-pad/usb-realplay.cpp
 	USB/usb-pad/usb-pad-ff.cpp
+	USB/usb-pad/usb-pad-studio-ffb.cpp
 	USB/usb-pad/usb-pad-sdl-ff.cpp
 	USB/usb-pad/usb-pad.cpp
 	USB/usb-pad/usb-seamic.cpp

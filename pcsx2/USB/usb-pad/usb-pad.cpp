@@ -6,6 +6,7 @@
 #include "IconsPromptFont.h"
 #include "USB/qemu-usb/USBinternal.h"
 #include "USB/usb-pad/usb-pad-sdl-ff.h"
+#include "USB/usb-pad/usb-pad-studio-ffb.h"
 #include "USB/USB.h"
 #include "Host.h"
 #include "StateWrapper.h"
@@ -379,6 +380,14 @@ namespace usb_pad
 
 	int PadState::TokenOut(const u8* data, int len)
 	{
+		// Forward the original wheel output report before ParseFFData() can return
+		// for lack of an SDL Haptic device. This diagnostic path only sends data
+		// to the local Lenkrad Studio listener; it does not drive a motor.
+		SendFFBReportToStudio(data, len);
+
+		if (!data || len < static_cast<int>(sizeof(ff_data)))
+			return len;
+
 		const ff_data* ffdata = reinterpret_cast<const ff_data*>(data);
 		bool hires = (type == WT_DRIVING_FORCE_PRO || type == WT_DRIVING_FORCE_PRO_1102);
 		ParseFFData(ffdata, hires);
