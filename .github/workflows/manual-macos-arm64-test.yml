@@ -1,0 +1,49 @@
+name: Isolated ARMSX2 macOS arm64 test build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos-build:
+    uses: ./.github/workflows/macos_build.yml
+    with:
+      jobName: "Isolated macOS arm64 test build"
+      artifactPrefixName: "armsx2-test-macos-arm64"
+      sign_and_notarize: false
+    secrets: inherit
+
+  package-portable-test-app:
+    needs: macos-build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download the macOS build artifact
+        uses: actions/download-artifact@v8
+        with:
+          pattern: armsx2-test-macos-arm64-*
+          path: incoming
+          merge-multiple: true
+
+      - name: Add an isolated portable data directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p extracted ARMSX2-Test
+          archive="$(find incoming -maxdepth 1 -type f -name '*.tar.xz' -print -quit)"
+          test -n "$archive"
+          tar -xJf "$archive" -C extracted
+          app="$(find extracted -maxdepth 2 -type d -name '*.app' -print -quit)"
+          test -n "$app"
+          cp -R "$app" ARMSX2-Test/ARMSX2.app
+          printf 'TestData\n' > ARMSX2-Test/portable.txt
+          tar -cJf ARMSX2-Test-portable-macos-arm64.tar.xz ARMSX2-Test
+
+      - name: Upload the isolated test app
+        uses: actions/upload-artifact@v7
+        with:
+          name: armsx2-test-portable-macos-arm64-${{ github.run_number }}
+          path: ARMSX2-Test-portable-macos-arm64.tar.xz
+          if-no-files-found: error
+          retention-days: 14
